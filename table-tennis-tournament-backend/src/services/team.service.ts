@@ -118,12 +118,16 @@ export class TeamService {
         },
       });
 
-      await tx.teamMember.createMany({
-        data: uniqueMemberIds.map(memberId => ({
-          teamId: newTeam.id,
-          playerId: memberId,
-        })),
-      });
+      await Promise.all(
+        uniqueMemberIds.map((memberId) =>
+          tx.teamMember.create({
+            data: {
+              teamId: newTeam.id,
+              playerId: memberId,
+            },
+          })
+        )
+      );
 
       return newTeam;
     });

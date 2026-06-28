@@ -4,9 +4,9 @@
   "description": "Table Tennis Tournament Management System Backend",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "dev": "node init && nodemon src/server.ts",
+    "build": "node init && tsc",
+    "start": "node init && node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
@@ -14,7 +14,7 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
-   "prisma": {
+  "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [
@@ -26,7 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "4.16.2",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -38,6 +38,7 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.6",
     "pg": "^8.11.0",
+    "socket.io": "^4.8.3",
     "zod": "^3.21.4"
   },
   "devDependencies": {
@@ -49,13 +50,14 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^20.3.1",
     "@types/nodemailer": "^8.0.0",
+    "@types/socket.io": "^3.0.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
     "eslint": "^8.43.0",
     "nodeman": "^1.1.2",
     "nodemon": "^3.1.14",
     "prettier": "^2.8.8",
-    "prisma": "^7.8.0",
+    "prisma": "^4.16.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

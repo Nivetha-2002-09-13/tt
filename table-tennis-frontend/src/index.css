@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Great+Vibes&family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,70 +8,177 @@
   * {
     @apply scroll-smooth;
   }
-  
+
   body {
-    @apply bg-gray-50 font-sans text-gray-900 antialiased;
+    @apply font-sans text-white antialiased;
+    background: linear-gradient(180deg, #061D23 0%, #0a2535 100%);
+    min-height: 100vh;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-semibold;
   }
 }
 
 @layer components {
+
+  /* ── Buttons ── */
   .btn-primary {
-    @apply bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+    @apply bg-gradient-to-r from-[#12679E] to-[#1a85cc] hover:from-[#1a85cc] hover:to-[#12679E]
+           text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300
+           transform hover:scale-105 hover:shadow-[0_0_20px_rgba(74,238,255,0.3)]
+           focus:outline-none focus:ring-2 focus:ring-[#4AEEFF] focus:ring-offset-2
+           focus:ring-offset-[#061D23] disabled:opacity-50 disabled:cursor-not-allowed
+           disabled:transform-none;
   }
-  
+
   .btn-secondary {
-    @apply bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-primary-400 font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50;
+    @apply bg-transparent border border-[#12679E] text-[#4AEEFF] hover:bg-[#12679E]/20
+           font-semibold px-6 py-2.5 rounded-xl transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-[#4AEEFF] disabled:opacity-50;
   }
-  
+
   .btn-danger {
-    @apply bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500;
+    @apply bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800
+           text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300
+           transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500;
   }
-  
+
+  /* ── Cards ── */
   .card {
-    @apply bg-white rounded-2xl shadow-md border border-gray-100 p-6 md:p-8; 
+    @apply rounded-2xl border border-[#12679E]/40 bg-gradient-to-br from-[#123B4A] to-[#061D23]
+           p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-sm;
   }
-  
+
+  .card-hover {
+    @apply card transition-all duration-300 hover:border-[#4AEEFF]/60
+           hover:shadow-[0_12px_40px_rgba(74,238,255,0.12)] hover:-translate-y-1;
+  }
+
+  /* ── Inputs ── */
   .input-field {
-    @apply w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200 bg-white;
+    @apply w-full px-4 py-2.5 bg-[#061D23]/80 border border-[#12679E]/50 rounded-xl
+           text-white placeholder-[#4AEEFF]/40
+           focus:ring-2 focus:ring-[#4AEEFF] focus:border-[#4AEEFF] outline-none
+           transition-all duration-200;
   }
-  
-  /* Custom scrollbar */
+
+  /* ── Skeleton ── */
+  .skeleton {
+    @apply bg-gradient-to-r from-[#12679E]/20 via-[#4AEEFF]/10 to-[#12679E]/20
+           animate-skeleton rounded-lg;
+    background-size: 200% 100%;
+  }
+
+  .skeleton-card {
+    @apply rounded-2xl border border-[#12679E]/20 bg-[#0d2d38] p-6 overflow-hidden;
+  }
+
+  /* ── Badges ── */
+  .badge-upcoming {
+    @apply px-3 py-1 text-xs font-semibold rounded-full
+           bg-blue-500/20 text-blue-300 border border-blue-500/40;
+  }
+  .badge-ongoing {
+    @apply px-3 py-1 text-xs font-semibold rounded-full
+           bg-green-500/20 text-green-300 border border-green-500/40;
+  }
+  .badge-completed {
+    @apply px-3 py-1 text-xs font-semibold rounded-full
+           bg-gray-500/20 text-gray-300 border border-gray-500/40;
+  }
+  .badge-cancelled {
+    @apply px-3 py-1 text-xs font-semibold rounded-full
+           bg-red-500/20 text-red-300 border border-red-500/40;
+  }
+
+  /* ── Scrollbar ── */
   ::-webkit-scrollbar {
     @apply w-2;
   }
-  
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 rounded-full;
+    background: #061D23;
   }
-  
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary-400 rounded-full hover:bg-primary-500;
+    @apply bg-[#12679E] rounded-full;
   }
-  
-  /* Loading spinner */
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#4AEEFF];
+  }
+
+  /* ── Loading spinner ── */
   .spinner {
-    @apply animate-spin rounded-full h-8 w-8 border-4 border-primary-200 border-t-primary-600;
+    @apply animate-spin rounded-full h-8 w-8 border-4 border-[#12679E] border-t-[#4AEEFF];
   }
-  
-  /* Gradient text */
+
+  /* ── Gradient text ── */
   .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 to-secondary-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-[#4AEEFF] to-[#12679E] bg-clip-text text-transparent;
   }
-  
-  /* Table styles */
+
+  /* ── Table styles (dark) ── */
   .table-container {
-    @apply overflow-x-auto rounded-xl border border-gray-200;
+    @apply overflow-x-auto rounded-xl border border-[#12679E]/30;
   }
-  
   .table-header {
-    @apply bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider;
+    @apply bg-[#0d2d38] px-6 py-4 text-left text-xs font-semibold text-[#4AEEFF]/70
+           uppercase tracking-wider border-b border-[#12679E]/30;
   }
-  
+  .table-row {
+    @apply border-b border-[#12679E]/20 hover:bg-[#12679E]/10 transition-colors duration-150;
+  }
   .table-cell {
-    @apply px-6 py-4 text-sm text-gray-700;
+    @apply px-6 py-4 text-sm text-[#D8FBFF];
   }
+
+  /* ── Divider ── */
+  .divider {
+    @apply border-t border-[#12679E]/30 my-4;
+  }
+
+  /* ── Glow effects ── */
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(74, 238, 255, 0.25);
+  }
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(18, 103, 158, 0.4);
+  }
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);
+  }
+
+  /* ── Section header ── */
+  .section-header {
+    @apply flex items-center gap-3 mb-6;
+  }
+  .section-title {
+    @apply text-2xl font-bold text-white;
+  }
+  .section-accent {
+    @apply h-1 w-12 rounded-full bg-gradient-to-r from-[#4AEEFF] to-[#12679E];
+  }
+
+  /* ── Page container ── */
+  .page-container {
+    @apply min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto;
+  }
+
+  /* ── Filter pill button ── */
+  .filter-pill {
+    @apply px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-200
+           border-[#12679E]/50 text-[#D8FBFF]/60 hover:border-[#4AEEFF]/60 hover:text-[#4AEEFF];
+  }
+  .filter-pill-active {
+    @apply px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-200
+           bg-[#4AEEFF]/10 border-[#4AEEFF] text-[#4AEEFF];
+  }
+}
+
+@layer utilities {
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-600 { animation-delay: 600ms; }
+  .animation-delay-800 { animation-delay: 800ms; }
+  .animation-delay-1000 { animation-delay: 1000ms; }
+  .animation-delay-2000 { animation-delay: 2000ms; }
 }

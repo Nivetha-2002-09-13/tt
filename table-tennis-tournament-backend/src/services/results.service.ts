@@ -308,14 +308,18 @@ export class ResultsService {
     });
 
     if (registrations.length > 0) {
-      await prisma.notification.createMany({
-        data: registrations.map(reg => ({
-          userId: reg.playerId,
-          type: 'TOURNAMENT_RESULTS',
-          title: 'Tournament Results Released',
-          message: `Results for ${tournament.name} have been released. Check the leaderboard!`,
-        })),
-      });
+      await Promise.all(
+        registrations.map((reg) =>
+          prisma.notification.create({
+            data: {
+              userId: reg.playerId,
+              type: 'TOURNAMENT_RESULTS',
+              title: 'Tournament Results Released',
+              message: `Results for ${tournament.name} have been released. Check the leaderboard!`,
+            },
+          })
+        )
+      );
     }
 
     return results;

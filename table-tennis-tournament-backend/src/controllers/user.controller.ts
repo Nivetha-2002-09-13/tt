@@ -53,7 +53,7 @@ export const uploadProfileImage = catchAsync(async (req: Request, res: Response)
     throw new AppError('No file uploaded', 400);
   }
 
-  const imageUrl = `/uploads/profile-images/${req.file.filename}`;
+  const imageUrl = `/uploads/files/${req.file.filename}`;
 
   // Update user's profile image
   const updatedUser = await prisma.user.update({
@@ -69,6 +69,23 @@ export const uploadProfileImage = catchAsync(async (req: Request, res: Response)
   });
 
   sendResponse(res, 200, 'Profile image uploaded successfully', updatedUser);
+});
+
+// Upload payment receipt (Authenticated users)
+export const uploadPaymentReceipt = catchAsync(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new AppError('No file uploaded', 400);
+  }
+
+  const receiptUrl = `/uploads/files/${req.file.filename}`;
+
+  // Update user's player profile with payment receipt
+  const updatedProfile = await prisma.playerProfile.update({
+    where: { userId: req.user!.id },
+    data: { paymentReceiptUrl: receiptUrl },
+  });
+
+  sendResponse(res, 200, 'Payment receipt uploaded successfully', updatedProfile);
 });
 
 // Add this function

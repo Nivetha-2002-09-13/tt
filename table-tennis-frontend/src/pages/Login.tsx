@@ -2,298 +2,21 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 import api from "../services/api";
-
-/* Palette: #061D23 | #4AEEFF | #FFFFFF | #12679E */
-
-const styles: Record<string, React.CSSProperties> = {
-
-  /* ── Full-screen background with TT table image ── */
-  root: {
-    minHeight: "100vh",
-    height: "100vh",
-    overflow: "hidden",
-    fontFamily: "'Segoe UI', Arial, sans-serif",
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-
-  /* Table tennis table background */
-  bgImage: {
-    position: "absolute",
-    inset: 0,
-    backgroundImage: "url('https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?w=1920&q=80')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    zIndex: 0,
-  },
-
-  /* Dark tinted overlay to keep palette feel */
-  bgOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: "#061D23",
-    opacity: 0.62,
-    zIndex: 1,
-  },
-
-  /* Diagonal colour accents over the bg (WTT style) */
-  geo1: {
-    position: "absolute",
-    inset: 0,
-    background: "#12679E",
-    clipPath: "polygon(0 0, 32% 0, 18% 100%, 0 100%)",
-    opacity: 0.28,
-    zIndex: 2,
-  },
-  geo2: {
-    position: "absolute",
-    inset: 0,
-    background: "#4AEEFF",
-    clipPath: "polygon(30% 0, 36% 0, 22% 100%, 16% 100%)",
-    opacity: 0.22,
-    zIndex: 2,
-  },
-
-  /* Logo on the left side over background */
-  leftBrand: {
-    position: "absolute" as const,
-    top: "50%",
-    left: "6%",
-    transform: "translateY(-50%)",
-    zIndex: 5,
-    display: "flex",
-    flexDirection: "column" as const,
-    alignItems: "flex-start",
-  },
-  leftAccentLine: {
-    width: 140,
-    height: 4,
-    background: "#4AEEFF",
-    margin: "16px 0 4px",
-    borderRadius: 2,
-  },
-  leftAccentLineCross: {
-    width: 80,
-    height: 4,
-    background: "#FFFFFF",
-    margin: "6px 0 12px",
-    marginLeft: 28,
-    borderRadius: 2,
-  },
-  leftSub: {
-    fontSize: 14,
-    letterSpacing: 3,
-    color: "#FFFFFF",
-    textTransform: "uppercase" as const,
-    fontWeight: 700,
-  },
-
-  /* ── Transparent sign-in card (right side, WTT style) ── */
-  card: {
-  position: "relative",
-  zIndex: 10,
-  width: 440,
-  minHeight: "100vh",
-  display: "flex",
-  flexDirection: "column" as const,
-  justifyContent: "center",
-  padding: "52px 48px",
-  boxSizing: "border-box" as const,
-  background: "rgba(255, 255, 255, 0.04)", // was 0.08
-  backdropFilter: "blur(14px)",            // was 24px
-  WebkitBackdropFilter: "blur(14px)",
-  borderLeft: "1px solid rgba(255,255,255,0.12)",
-},
-
-  /* White top accent bar */
-  accentBar: {
-    position: "absolute" as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    background: "#FFFFFF",
-    zIndex: 1,
-  },
-
-  /* Logo at top of card */
-  logoRow: {
-    marginBottom: 24,
-  },
-
-  heading: {
-    color: "#FFFFFF",
-    fontSize: 28,
-    fontWeight: 900,
-    letterSpacing: 2,
-    textTransform: "uppercase" as const,
-    margin: "0 0 28px",
-  },
-
-  label: {
-    display: "block",
-    fontSize: 12,
-    fontWeight: 700,
-    letterSpacing: 2,
-    color: "#4AEEFF",
-    textTransform: "uppercase" as const,
-    marginBottom: 6,
-  },
-  inputWrap: {
-    position: "relative" as const,
-    marginBottom: 18,
-  },
-  input: {
-    width: "100%",
-    background: "rgba(255, 255, 255, 0.1)",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
-    borderRadius: 3,
-    padding: "13px 16px",
-    color: "#FFFFFF",
-    fontSize: 15,
-    outline: "none",
-    boxSizing: "border-box" as const,
-    transition: "border-color 0.2s",
-  },
-  eyeBtn: {
-    position: "absolute" as const,
-    right: 12,
-    top: "50%",
-    transform: "translateY(-50%)",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    color: "#4AEEFF",
-    padding: 0,
-    display: "flex",
-    alignItems: "center",
-  },
-
-  btnPrimary: {
-    width: "100%",
-    padding: "14px",
-    background: "#FFFFFF",
-    color: "#061D23",
-    fontWeight: 900,
-    letterSpacing: 3,
-    fontSize: 14,
-    textTransform: "uppercase" as const,
-    border: "none",
-    borderRadius: 3,
-    cursor: "pointer",
-    transition: "opacity 0.2s",
-    marginBottom: 0,
-  },
-
-  tos: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.75)",
-    margin: "12px 0 18px",
-    letterSpacing: 0.3,
-    lineHeight: 1.6,
-  },
-
-  divider: {
-    borderColor: "rgba(74,238,255,0.2)",
-    margin: "4px 0 12px",
-  },
-
-  forgotRow: {
-    textAlign: "center" as const,
-    fontSize: 13,
-    color: "rgba(255,255,255,0.8)",
-    marginBottom: 10,
-    letterSpacing: 0.5,
-  },
-
-  btnOutline: {
-    width: "100%",
-    padding: "12px",
-    background: "rgba(6,29,35,0.4)",
-    color: "#FFFFFF",
-    fontWeight: 700,
-    letterSpacing: 2,
-    fontSize: 12,
-    textTransform: "uppercase" as const,
-    border: "1px solid rgba(74,238,255,0.4)",
-    borderRadius: 3,
-    cursor: "pointer",
-    marginTop: 10,
-    display: "block",
-    textDecoration: "none",
-    textAlign: "center" as const,
-    boxSizing: "border-box" as const,
-    transition: "opacity 0.2s",
-  },
-
-  registerRow: {
-    textAlign: "center" as const,
-    fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 16,
-    letterSpacing: 0.5,
-  },
-  registerLink: {
-    color: "#4AEEFF",
-    fontWeight: 700,
-    textDecoration: "none",
-  },
-
-  banner: {
-    background: "rgba(6,29,35,0.7)",
-    border: "1px solid #4AEEFF",
-    borderRadius: 3,
-    padding: "10px 14px",
-    textAlign: "center" as const,
-    marginTop: 10,
-  },
-  bannerText: { color: "#4AEEFF", fontSize: 12, marginBottom: 6 },
-  bannerBtn: {
-    background: "none",
-    border: "none",
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: 700,
-    textDecoration: "underline",
-    cursor: "pointer",
-    letterSpacing: 1,
-  },
-};
-
-const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-  e.currentTarget.style.borderColor = "#4AEEFF";
-};
-const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-  e.currentTarget.style.borderColor = "rgba(74,238,255,0.35)";
-};
-
-const EyeIcon = ({ open }: { open: boolean }) =>
-  open ? (
-    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-    </svg>
-  ) : (
-    <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-  );
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [resending, setResending] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,6 +27,7 @@ const Login: React.FC = () => {
       navigate("/app/dashboard");
     } catch (error: any) {
       if (error.response?.status === 403) setUnverifiedEmail(email);
+      else toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -332,161 +56,192 @@ const Login: React.FC = () => {
       setShowForgotPassword(false);
       setResetEmail("");
     } catch {
-      /* handled by interceptor */
+      toast.error("Failed to send reset link");
     } finally {
       setIsResetting(false);
     }
   };
 
   return (
-    <div style={styles.root}>
+    <div className="min-h-screen flex text-white" style={{ background: "#061D23" }}>
+      {/* ── Left Half: Form ── */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 py-12 relative z-10 bg-[#061D23]">
+        <Link to="/" className="absolute top-8 left-8 sm:left-12 flex items-center gap-2 group">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#12679E] to-[#4AEEFF]/60 rounded-lg
+                          flex items-center justify-center transform transition-all group-hover:scale-110">
+            <span className="text-white text-sm">🏓</span>
+          </div>
+          <span className="font-black text-lg tracking-tight">TT<span className="text-[#4AEEFF]">MS</span></span>
+        </Link>
 
-      {/* ── FULL-SCREEN TABLE TENNIS TABLE BACKGROUND ── */}
-      <div style={styles.bgImage} />
-      <div style={styles.bgOverlay} />
-      <div style={styles.geo1} />
-      <div style={styles.geo2} />
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full mx-auto"
+        >
+          {!showForgotPassword ? (
+            <form onSubmit={handleSubmit}>
+              <p className="text-[#4AEEFF] font-bold text-sm tracking-widest uppercase mb-2">Welcome Back</p>
+              <h2 className="text-4xl font-black text-white mb-8">Account Sign In</h2>
 
-      {/* ── LEFT LOGO ── */}
-      <div style={styles.leftBrand}>
-        <img
-          src="/Logo__with_Name.png"
-          alt="Sam's College"
-          style={{ width: 380, maxWidth: "100%", display: "block" }}
-        />
-        <div style={styles.leftAccentLine} />
-        <div style={styles.leftAccentLineCross} />
-        <p style={styles.leftSub}>Table Tennis Management System</p>
-      </div>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3.5
+                               text-white placeholder-[#D8FBFF]/30 focus:border-[#4AEEFF] focus:bg-[#12679E]/20
+                               transition-all outline-none"
+                    placeholder="Enter your email"
+                  />
+                </div>
 
-      {/* ── TRANSPARENT SIGN-IN CARD ── */}
-      <div style={styles.card}>
-        <div style={styles.accentBar} />
+                <div>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl pl-4 pr-12 py-3.5
+                                 text-white placeholder-[#D8FBFF]/30 focus:border-[#4AEEFF] focus:bg-[#12679E]/20
+                                 transition-all outline-none"
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4AEEFF]/60 hover:text-[#4AEEFF] transition-colors"
+                    >
+                      {showPassword ? "👁" : "👁‍🗨"}
+                    </button>
+                  </div>
+                </div>
 
-        {!showForgotPassword ? (
-          <form onSubmit={handleSubmit}>
+                {unverifiedEmail && (
+                  <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl flex items-center justify-between">
+                    <span className="text-xs text-red-300">Email not verified.</span>
+                    <button type="button" onClick={handleResend} disabled={resending}
+                            className="text-xs font-bold text-red-400 hover:text-red-300 underline">
+                      {resending ? "Sending…" : "Resend Link"}
+                    </button>
+                  </div>
+                )}
 
-            <h2 style={styles.heading}>Account Sign In</h2>
-
-            <label style={styles.label}>Email Address</label>
-            <div style={styles.inputWrap}>
-              <input
-                style={styles.input}
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                required
-              />
-            </div>
-
-            <label style={styles.label}>Password</label>
-            <div style={styles.inputWrap}>
-              <input
-                style={{ ...styles.input, paddingRight: 42 }}
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                required
-              />
-              <button
-                type="button"
-                style={styles.eyeBtn}
-                onClick={() => setShowPassword((p) => !p)}
-                tabIndex={-1}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                <EyeIcon open={showPassword} />
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{ ...styles.btnPrimary, opacity: isLoading ? 0.6 : 1 }}
-            >
-              {isLoading ? "Signing In…" : "Sign In"}
-            </button>
-
-            <p style={styles.tos}>
-              By Signing In, You Agree To Our{" "}
-              <span style={{ color: "#4AEEFF", fontWeight: 700 }}>Terms And Conditions</span>{" "}
-              And Our{" "}
-              <span style={{ color: "#4AEEFF", fontWeight: 700 }}>Privacy Policy</span>.
-            </p>
-
-            {unverifiedEmail && (
-              <div style={styles.banner}>
-                <p style={styles.bannerText}>📧 Your email is not verified yet.</p>
-                <button type="button" onClick={handleResend} disabled={resending} style={styles.bannerBtn}>
-                  {resending ? "Sending…" : "Resend verification email"}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-[#4AEEFF] to-[#12679E] text-[#061D23] font-black
+                             py-3.5 rounded-xl text-sm uppercase tracking-widest hover:from-[#CFF9FF]
+                             hover:to-[#4AEEFF] transition-all transform hover:scale-[1.02] shadow-[0_0_20px_rgba(74,238,255,0.2)]"
+                >
+                  {isLoading ? "Signing In…" : "Sign In"}
                 </button>
               </div>
-            )}
 
-            <hr style={styles.divider} />
+              <div className="mt-8 pt-8 border-t border-[#12679E]/30 text-center space-y-4">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm font-semibold text-[#D8FBFF]/60 hover:text-[#4AEEFF] transition-colors"
+                >
+                  Forgot your password?
+                </button>
+                <p className="text-sm text-[#D8FBFF]/40">
+                  Don't have an account?{" "}
+                  <Link to="/register" className="text-[#4AEEFF] font-bold hover:underline">
+                    Create one
+                  </Link>
+                </p>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleForgotPassword}>
+              <p className="text-[#4AEEFF] font-bold text-sm tracking-widest uppercase mb-2">Recovery</p>
+              <h2 className="text-4xl font-black text-white mb-8">Reset Password</h2>
 
-            <p style={styles.forgotRow}>Forgot your password ?</p>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3.5
+                               text-white placeholder-[#D8FBFF]/30 focus:border-[#4AEEFF] transition-all outline-none"
+                    placeholder="Enter your email"
+                  />
+                </div>
 
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              style={styles.btnOutline}
-            >
-              Reset Password
-            </button>
+                <button
+                  type="submit"
+                  disabled={isResetting}
+                  className="w-full bg-gradient-to-r from-[#4AEEFF] to-[#12679E] text-[#061D23] font-black
+                             py-3.5 rounded-xl text-sm uppercase tracking-widest hover:from-[#CFF9FF] transition-all"
+                >
+                  {isResetting ? "Sending…" : "Send Reset Link"}
+                </button>
+              </div>
 
-            <Link to="/" style={{ textDecoration: "none" }}>
-              <button type="button" style={styles.btnOutline}>
-                Back to Home
-              </button>
-            </Link>
+              <div className="mt-8 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="text-sm font-semibold text-[#D8FBFF]/60 hover:text-[#4AEEFF] transition-colors"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            </form>
+          )}
+        </motion.div>
+      </div>
 
-            <p style={styles.registerRow}>
-              Don't have an account?{" "}
-              <Link to="/register" style={styles.registerLink}>Create Account</Link>
-            </p>
-          </form>
-        ) : (
-          <form onSubmit={handleForgotPassword}>
-            <h2 style={styles.heading}>Reset Password</h2>
+      {/* ── Right Half: Abstract Visual ── */}
+      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-[#0a2535] border-l border-[#12679E]/30"
+           style={{ background: "linear-gradient(135deg, #0a2535 0%, #061D23 100%)" }}>
+        {/* Glows */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-[0.08] blur-3xl pointer-events-none"
+             style={{ background: "radial-gradient(circle, #4AEEFF, transparent)" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl pointer-events-none"
+             style={{ background: "radial-gradient(circle, #12679E, transparent)" }} />
 
-            <label style={styles.label}>Email Address</label>
-            <div style={styles.inputWrap}>
-              <input
-                style={styles.input}
-                type="email"
-                placeholder="Email Address"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                required
-              />
+        {/* Grid pattern */}
+        <div className="absolute inset-0 pointer-events-none opacity-10"
+             style={{
+               backgroundImage: `linear-gradient(#4AEEFF 1px, transparent 1px), linear-gradient(90deg, #4AEEFF 1px, transparent 1px)`,
+               backgroundSize: "60px 60px",
+             }}
+        />
+
+        <div className="relative z-10 m-auto max-w-lg text-center px-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-[#12679E] to-[#4AEEFF]/40 rounded-3xl
+                            flex items-center justify-center border border-[#4AEEFF]/30 shadow-[0_0_50px_rgba(74,238,255,0.2)]">
+              <span className="text-6xl text-white">🏓</span>
             </div>
-
-            <button
-              type="submit"
-              disabled={isResetting}
-              style={{ ...styles.btnPrimary, opacity: isResetting ? 0.6 : 1 }}
-            >
-              {isResetting ? "Sending…" : "Send Reset Link"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(false)}
-              style={{ ...styles.btnOutline, marginTop: 14 }}
-            >
-              ← Back to Login
-            </button>
-          </form>
-        )}
+            <h3 className="text-3xl font-black text-white mb-4">Master the Table</h3>
+            <p className="text-[#D8FBFF]/60 text-lg">
+              Manage your tournaments, track your statistics, and dominate the leaderboard in one seamless experience.
+            </p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

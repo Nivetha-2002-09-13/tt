@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { SkeletonTable, EmptyState, PageHeader, WinRateBar, Medal } from "../components/UI";
 
 interface Player {
   playerId: string;
@@ -21,39 +22,29 @@ interface Category {
 }
 
 const GlobalLeaderboard: React.FC = () => {
-  const { user: _user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [standings, setStandings] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
-  useEffect(() => {
-    fetchAllCategories();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCategory) {
-      fetchGlobalStandings();
-    }
-  }, [selectedCategory]);
+  useEffect(() => { fetchAllCategories(); }, []);
+  useEffect(() => { if (selectedCategory) fetchGlobalStandings(); }, [selectedCategory]);
 
   const fetchAllCategories = async () => {
     try {
-      // Fetch all tournaments to get unique categories
       const response = await api.get("/tournaments");
       const tournaments = response.data.data;
-
       const uniqueCategories = new Map();
       for (const tournament of tournaments) {
-        for (const category of tournament.categories) {
+        for (const category of tournament.categories ?? []) {
           if (!uniqueCategories.has(category.name)) {
             uniqueCategories.set(category.name, category);
           }
         }
       }
       setCategories(Array.from(uniqueCategories.values()));
-    } catch (error) {
+    } catch {
       console.error("Failed to fetch categories");
     } finally {
       setLoadingCategories(false);
@@ -63,11 +54,9 @@ const GlobalLeaderboard: React.FC = () => {
   const fetchGlobalStandings = async () => {
     setLoading(true);
     try {
-      const response = await api.get(
-        `/results/global/${encodeURIComponent(selectedCategory)}`,
-      );
+      const response = await api.get(`/results/global/${encodeURIComponent(selectedCategory)}`);
       setStandings(response.data.data.standings);
-    } catch (error) {
+    } catch {
       console.error("Failed to fetch global standings");
     } finally {
       setLoading(false);
@@ -75,123 +64,128 @@ const GlobalLeaderboard: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Global Leaderboard</h1>
-      </div>
+    <div className="page-container">
+      <PageHeader
+        title="Global Rankings"
+        subtitle="Cross-tournament player rankings by category"
+        accent="🌍"
+      />
 
       {/* Category Selector */}
-      <div className="card mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card mb-8"
+      >
+        <label className="block text-xs font-semibold text-[#4AEEFF]/70 mb-2 uppercase tracking-wider">
           Select Category
         </label>
         {loadingCategories ? (
-          <p>Loading categories...</p>
+          <div className="h-10 w-64 skeleton rounded-xl" />
         ) : (
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="input-field max-w-md"
           >
-            <option value="">-- Select a category --</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.name} ({category.type})
+            <option value="" style={{ background: "#0d2d38" }}>-- Select a category --</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.name} style={{ background: "#0d2d38" }}>
+                {c.name} ({c.type})
               </option>
             ))}
           </select>
         )}
-        <p className="text-xs text-gray-500 mt-2">
-          Shows player rankings across ALL tournaments for this category
+        <p className="text-xs text-[#D8FBFF]/40 mt-2">
+          Rankings are accumulated across ALL tournaments for the selected category.
         </p>
-      </div>
+      </motion.div>
 
-      {/* Standings Table */}
+      {/* Standings */}
       {selectedCategory && (
-        <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {selectedCategory} - Overall Rankings
-          </h2>
-
-          {loading ? (
-            <div className="text-center py-8">Loading rankings...</div>
-          ) : standings.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                No completed matches found for this category.
-              </p>
-              <p className="text-sm text-gray-400">
-                Play and complete matches to see rankings.
-              </p>
+        loading ? (
+          <SkeletonTable rows={8} cols={7} />
+        ) : standings.length === 0 ? (
+          <EmptyState
+            icon="🌍"
+            title="No rankings yet"
+            description="No completed matches found for this category. Play and complete matches to see global rankings."
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="card"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  {selectedCategory} — Overall Rankings
+                </h2>
+                <p className="text-sm text-[#D8FBFF]/50 mt-1">
+                  {standings.length} players ranked globally
+                </p>
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
+
+            <div className="overflow-x-auto rounded-xl border border-[#12679E]/30">
               <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                      Rank
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                      Player
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Matches
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Wins
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Losses
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Points
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">
-                      Games
-                    </th>
+                <thead>
+                  <tr className="bg-[#0d2d38] border-b border-[#12679E]/30">
+                    {["Rank", "Player", "Matches", "Wins", "Losses", "Points", "Games"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold
+                                              text-[#4AEEFF]/60 uppercase tracking-wider">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody>
                   {standings.map((player, index) => (
-                    <tr key={player.playerId} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium">
-                        {index === 0
-                          ? "🥇"
-                          : index === 1
-                            ? "🥈"
-                            : index === 2
-                              ? "🥉"
-                              : `${index + 1}`}
+                    <motion.tr
+                      key={player.playerId}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.04 }}
+                      className="border-b border-[#12679E]/15 hover:bg-[#12679E]/10 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <Medal rank={index} />
                       </td>
-                      <Link
-                        to={`/profile/${player.playerId}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                      >
-                        {player.playerName}
-                      </Link>
-                      <td className="px-4 py-3 text-sm text-center">
+                      <td className="px-4 py-3">
+                        <Link
+                          to={`/profile/${player.playerId}`}
+                          className="text-sm font-semibold text-[#4AEEFF] hover:text-[#CFF9FF]
+                                     hover:underline transition-colors block"
+                        >
+                          {player.playerName}
+                        </Link>
+                        <WinRateBar wins={player.wins} total={player.matchesPlayed} />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#D8FBFF]/70 text-center">
                         {player.matchesPlayed}
                       </td>
-                      <td className="px-4 py-3 text-sm text-center text-green-600">
-                        {player.wins}
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-semibold text-green-400">{player.wins}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-center text-red-600">
-                        {player.losses}
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-semibold text-red-400">{player.losses}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-center font-bold">
-                        {player.points}
+                      <td className="px-4 py-3 text-center">
+                        <span className={`font-black ${index === 0 ? "text-yellow-400 text-lg" : "text-[#4AEEFF] text-sm"}`}>
+                          {player.points}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-center">
-                        {player.gamesWon} - {player.gamesLost}
+                      <td className="px-4 py-3 text-sm text-[#D8FBFF]/60 text-center">
+                        {player.gamesWon} – {player.gamesLost}
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </motion.div>
+        )
       )}
     </div>
   );

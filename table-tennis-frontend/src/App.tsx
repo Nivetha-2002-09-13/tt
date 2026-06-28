@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -26,7 +27,14 @@ import AdminRequests from "./pages/AdminRequests";
 import PublicProfile from "./pages/PublicProfile";
 import GlobalLeaderboard from "./pages/GlobalLeaderboard";
 import Players from "./pages/Players";
-//import VerifyEmail from "./pages/VerifyEmail";
+import PublicBracket from "./pages/PublicBracket";
+import NotificationsPage from "./pages/NotificationsPage";
+import MatchCalendar from "./pages/MatchCalendar";
+import PlayerStatsPage from "./pages/PlayerStatsPage";
+import SpectatorView from "./pages/SpectatorView";
+import MatchScorecard from "./pages/MatchScorecard";
+import DownloadCenter from "./pages/DownloadCenter";
+import FAQPage from "./pages/FAQPage";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -56,11 +64,14 @@ function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="tournaments" element={<Tournaments />} />
         <Route path="tournaments/:id" element={<TournamentDetails />} />
+        <Route path="tournaments/:id/bracket" element={<PublicBracket />} />
+        <Route path="tournaments/:id/spectator" element={<SpectatorView />} />
         <Route path="leaderboard" element={<Leaderboard />} />
         <Route path="global-leaderboard" element={<GlobalLeaderboard />} />
         <Route path="profile/:userId" element={<PublicProfile />} />
         <Route path="players" element={<Players />} />
-        {/*<Route path="verify-email" element={<VerifyEmail />} />*/}
+        <Route path="faq" element={<FAQPage />} />
+        <Route path="matches/:matchId/scorecard" element={<MatchScorecard />} />
       </Route>
 
       {/* Auth routes */}
@@ -88,6 +99,11 @@ function AppRoutes() {
         <Route path="profile" element={<Profile />} />
         <Route path="users" element={<Users />} />
         <Route path="admin-requests" element={<AdminRequests />} />
+        <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="calendar" element={<MatchCalendar />} />
+        <Route path="stats" element={<PlayerStatsPage />} />
+        <Route path="downloads" element={<DownloadCenter />} />
+        <Route path="faq" element={<FAQPage />} />
       </Route>
     </Routes>
   );
@@ -96,32 +112,34 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: "#363636",
-              color: "#fff",
-              borderRadius: "12px",
-            },
-            success: {
-              icon: "🏆",
+      <ThemeProvider>
+        <AuthProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
               style: {
-                background: "#10b981",
+                background: "#363636",
+                color: "#fff",
+                borderRadius: "12px",
               },
-            },
-            error: {
-              icon: "❌",
-              style: {
-                background: "#ef4444",
+              success: {
+                icon: "🏆",
+                style: {
+                  background: "#10b981",
+                },
               },
-            },
-          }}
-        />
-        <AppRoutes />
-      </AuthProvider>
+              error: {
+                icon: "❌",
+                style: {
+                  background: "#ef4444",
+                },
+              },
+            }}
+          />
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

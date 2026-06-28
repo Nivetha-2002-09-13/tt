@@ -4,6 +4,7 @@ import { catchAsync } from '../utils/catchAsync';
 import { sendResponse } from '../utils/sendResponse';
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
+import { getIO } from '../utils/socket';
 
 const matchService = new MatchService();
 
@@ -137,6 +138,9 @@ export const updateMatch = catchAsync(async (req: Request, res: Response) => {
 
   console.log("Updated match:", matchId, "| data:", updateData);
   
+  // Emit WebSocket event for real-time live scoring
+  getIO().to(`tournament_${match.tournamentId}`).emit('match:update', match);
+
   sendResponse(res, 200, 'Match updated successfully', match);
 });
 // Delete all knockout matches for a category
@@ -255,6 +259,9 @@ export const updateMatchAndAdvance = catchAsync(async (req: Request, res: Respon
       });
     }
   }
+  
+  // Emit socket update
+  getIO().to(`tournament_${updatedMatch.tournamentId}`).emit('match:update', updatedMatch);
   
   sendResponse(res, 200, 'Match updated and winner advanced', updatedMatch);
 });

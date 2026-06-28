@@ -17,7 +17,7 @@ import {
   addCategorySchema,
 } from '../validations/tournament.validation';
 
-import { updateCategory, deleteCategory } from '../controllers/tournament.controller';
+import { updateCategory, deleteCategory, generateDraws } from '../controllers/tournament.controller';
 
 const router = Router();
 
@@ -34,5 +34,7 @@ router.post('/:tournamentId/categories', authenticate, isAdmin, validate(addCate
 
 router.patch('/categories/:categoryId', authenticate, isAdmin, updateCategory);
 router.delete('/categories/:categoryId', authenticate, isAdmin, deleteCategory);
+
+router.post('/:id/generate-draws', authenticate, isAdmin, generateDraws);
 
 export default router;

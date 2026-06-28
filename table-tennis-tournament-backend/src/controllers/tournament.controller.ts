@@ -307,3 +307,60 @@ export const deleteCategory = catchAsync(async (req: Request, res: Response) => 
 
   sendResponse(res, 200, 'Category deleted successfully');
 });
+
+export const generateDraws = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const categories = await prisma.category.findMany({
+    where: { tournamentId: id }
+  });
+
+  for (const category of categories) {
+    await prisma.group.deleteMany({
+      where: { tournamentId: id, categoryId: category.id }
+    });
+
+    const regs = await prisma.tournamentRegistration.findMany({
+      where: { tournamentId: id, categoryId: category.id, status: 'APPROVED' },
+      include: { player: true }
+    });
+    
+    regs.sort(() => Math.random() - 0.5);
+    
+    const groupSize = 4;
+    const numGroups = Math.ceil(regs.length / groupSize);
+    
+    for (let i=0; i<numGroups; i++) {
+      const groupPlayers = regs.slice(i * groupSize, (i+1) * groupSize);
+      if (groupPlayers.length < 2) continue;
+      
+      const group = await prisma.group.create({
+        data: {
+          name: 'Group ' + String.fromCharCode(65 + i),
+          tournamentId: id,
+          categoryId: category.id
+        }
+      });
+      
+      for (const p of groupPlayers) {
+        await prisma.groupPlayer.create({
+          data: { groupId: group.id, playerId: p.playerId }
+        });
+      }
+      
+      for (let j=0; j<groupPlayers.length; j++) {
+        for (let k=j+1; k<groupPlayers.length; k++) {
+          await prisma.groupMatch.create({
+            data: {
+              groupId: group.id,
+              player1Id: groupPlayers[j].playerId,
+              player2Id: groupPlayers[k].playerId,
+              scheduledTime: new Date()
+            }
+          });
+        }
+      }
+    }
+  }
+
+  sendResponse(res, 200, 'Draws generated successfully');
+});

@@ -18,7 +18,6 @@ async function main() {
       lastName: 'User',
       phone: '+94771234567',
       role: 'ADMIN',
-      isEmailVerified: true,
       isSuperAdmin: true,
       adminProfile: {
         create: {
@@ -41,7 +40,6 @@ async function main() {
       lastName: 'User',
       phone: '+94771234568',
       role: 'REFEREE',
-      isEmailVerified: true,
       refereeProfile: {
         create: {
           certification: 'ITTF Level 2',

@@ -1,6 +1,5 @@
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
-import { MatchType, MatchStatus } from '@prisma/client';
 
 interface SeededPlayer {
   id: string;
@@ -105,16 +104,16 @@ export class BracketService {
       if (!player1 && !player2) continue;
 
       if (player1 && !player2) {
-        matches.push({
-          tournamentId,
-          categoryId,
-          matchType: MatchType.SINGLES,
+          matches.push({
+            tournamentId,
+            categoryId,
+            matchType: 'SINGLES',
           player1Id: player1.id,
           player2Id: null,
           round: roundName,
           matchNumber: matchNumber++,
           scheduledTime: startDate,
-          status: MatchStatus.WALKOVER,
+            status: 'WALKOVER',
           winnerId: player1.id,
           score: 'BYE',
         });
@@ -124,13 +123,13 @@ export class BracketService {
       matches.push({
         tournamentId,
         categoryId,
-        matchType: MatchType.SINGLES,
+        matchType: 'SINGLES',
         player1Id: player1?.id ?? null,
         player2Id: player2?.id ?? null,
         round: roundName,
         matchNumber: matchNumber++,
         scheduledTime: startDate,
-        status: MatchStatus.SCHEDULED,
+        status: 'SCHEDULED',
       });
     }
 
@@ -140,7 +139,7 @@ export class BracketService {
 
     const allMatchData = [...matches, ...roundMatches];
     if (allMatchData.length > 0) {
-      await prisma.match.createMany({ data: allMatchData });
+      await Promise.all(allMatchData.map((m) => prisma.match.create({ data: m })));
     }
 
     const createdMatches = await prisma.match.findMany({
@@ -323,12 +322,12 @@ export class BracketService {
       for (let i = 0; i < matchesInRound; i++) {
         rounds.push({
           tournamentId, categoryId,
-          matchType: MatchType.SINGLES,
+          matchType: 'SINGLES',
           player1Id: null, player2Id: null,
           round: roundName,
           matchNumber: matchNumber++,
           scheduledTime,
-          status: MatchStatus.SCHEDULED,
+          status: 'SCHEDULED',
         });
       }
       currentSize = currentSize / 2;
@@ -337,12 +336,12 @@ export class BracketService {
     // 3rd place match
     rounds.push({
       tournamentId, categoryId,
-      matchType: MatchType.SINGLES,
+      matchType: 'SINGLES',
       player1Id: null, player2Id: null,
       round: '3rd Place',
       matchNumber: matchNumber++,
       scheduledTime,
-      status: MatchStatus.SCHEDULED,
+      status: 'SCHEDULED',
     });
 
     return rounds;

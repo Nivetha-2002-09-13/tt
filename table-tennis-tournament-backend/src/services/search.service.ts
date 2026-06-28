@@ -5,9 +5,9 @@ export class SearchService {
   async searchTournaments(query: string, status?: string) {
     const whereClause: any = {
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { venue: { contains: query, mode: 'insensitive' } },
+        { name: { contains: query } },
+        { description: { contains: query } },
+        { venue: { contains: query } },
       ],
     };
 
@@ -35,9 +35,9 @@ export class SearchService {
       where: {
         role: 'PLAYER',
         OR: [
-          { firstName: { contains: query, mode: 'insensitive' } },
-          { lastName: { contains: query, mode: 'insensitive' } },
-          { email: { contains: query, mode: 'insensitive' } },
+          { firstName: { contains: query } },
+          { lastName: { contains: query } },
+          { email: { contains: query } },
         ],
       },
       include: {

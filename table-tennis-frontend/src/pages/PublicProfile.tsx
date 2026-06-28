@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import toast from "react-hot-toast";
-
+import PlayerRadarChart from "../components/PlayerRadarChart";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PublicPlayerProfile {
@@ -861,6 +861,35 @@ const PublicProfile: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Skill Radar Chart */}
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              background: "#061D23",
+              border: "1px solid #12679E",
+              borderRadius: 16,
+              padding: 24,
+              overflow: "hidden",
+            }}
+          >
+            <p
+              style={{
+                fontSize: 14,
+                color: "#4AEEFF",
+                textTransform: "uppercase",
+                letterSpacing: 1.5,
+                fontWeight: 800,
+                marginBottom: 16,
+                textAlign: "center"
+              }}
+            >
+              Player Skill Radar
+            </p>
+            <div style={{ width: "100%", height: 350 }}>
+              <PlayerRadarChart playerName={profile.firstName} />
+            </div>
+          </div>
 
           {/* No stats fallback */}
           {!stats && (

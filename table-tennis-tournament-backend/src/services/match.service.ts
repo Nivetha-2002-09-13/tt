@@ -439,15 +439,19 @@ export class MatchService {
     // Replace existing games
     await prisma.game.deleteMany({ where: { matchId } });
 
-    await prisma.game.createMany({
-      data: games.map(game => ({
-        matchId,
-        gameNumber: game.gameNumber,
-        player1Score: game.player1Score,
-        player2Score: game.player2Score,
-        winnerId: game.player1Score > game.player2Score ? player1Id : player2Id,
-      })),
-    });
+    await Promise.all(
+      games.map((game) =>
+        prisma.game.create({
+          data: {
+            matchId,
+            gameNumber: game.gameNumber,
+            player1Score: game.player1Score,
+            player2Score: game.player2Score,
+            winnerId: game.player1Score > game.player2Score ? player1Id : player2Id,
+          },
+        })
+      )
+    );
 
     // Determine match winner
     let player1Wins = 0;
@@ -467,7 +471,7 @@ export class MatchService {
         score: scoreString,
         status: 'COMPLETED',
         endTime: new Date(),
-        resultDetails: { games, player1Wins, player2Wins, totalGames: games.length },
+        resultDetails: JSON.stringify({ games, player1Wins, player2Wins, totalGames: games.length }),
       },
       include: {
         player1: { select: { firstName: true, lastName: true } },
@@ -476,22 +480,22 @@ export class MatchService {
     });
 
     // Notify both players
-    await prisma.notification.createMany({
-      data: [
+    await Promise.all(
+      [
         {
           userId: player1Id,
           type: 'MATCH_RESULT',
           title: 'Match Result Available',
-          message: `Your match against ${updatedMatch.player2?.firstName ?? ''} ${updatedMatch.player2?.lastName ?? ''} has been completed. Result: ${scoreString}`,
+          message: `Your match against ${((updatedMatch as any).player2?.firstName) ?? ''} ${((updatedMatch as any).player2?.lastName) ?? ''} has been completed. Result: ${scoreString}`,
         },
         {
           userId: player2Id,
           type: 'MATCH_RESULT',
           title: 'Match Result Available',
-          message: `Your match against ${updatedMatch.player1?.firstName ?? ''} ${updatedMatch.player1?.lastName ?? ''} has been completed. Result: ${scoreString}`,
+          message: `Your match against ${((updatedMatch as any).player1?.firstName) ?? ''} ${((updatedMatch as any).player1?.lastName) ?? ''} has been completed. Result: ${scoreString}`,
         },
-      ],
-    });
+      ].map((n) => prisma.notification.create({ data: n }))
+    );
 
     return updatedMatch;
   }

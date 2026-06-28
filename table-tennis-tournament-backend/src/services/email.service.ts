@@ -132,3 +132,34 @@ export const sendVerificationEmail = async (email: string, token: string, firstN
     }
   }
 };
+
+export const sendWelcomeEmail = async (email: string, firstName: string) => {
+  console.log('\n' + '='.repeat(70));
+  console.log('📧 WELCOME EMAIL');
+  console.log('='.repeat(70));
+  console.log(`To: ${email}`);
+  console.log('='.repeat(70) + '\n');
+
+  if (transporter && isEmailConfigured()) {
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || 'noreply@tabletennis.com',
+        to: email,
+        subject: 'Welcome to Table Tennis Tournament System! 🏓',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #061D23; color: #ffffff; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #4AEEFF; text-align: center;">Welcome ${firstName}! 🏓</h2>
+            <p style="color: #D8FBFF; font-size: 16px;">We are thrilled to have you join our Table Tennis Tournament Platform.</p>
+            <p style="color: #D8FBFF; font-size: 16px;">You can now browse tournaments, view live scores, and track your global rank!</p>
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="background-color: #12679E; color: white; text-decoration: none; padding: 12px 24px; border-radius: 5px; font-weight: bold;">Go to Dashboard</a>
+            </div>
+          </div>
+        `,
+      });
+      console.log(`✅ Welcome email sent to ${email}`);
+    } catch (error) {
+      console.error('❌ Failed to send welcome email:', error);
+    }
+  }
+};

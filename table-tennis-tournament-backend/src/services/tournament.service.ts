@@ -154,16 +154,20 @@ if (data.status === 'ONGOING') {
         });
 
         if (registeredPlayers.length > 0) {
-            await prisma.notification.createMany({
-                data: registeredPlayers.map(reg => ({
-                    userId: reg.playerId,
-                    type: 'TOURNAMENT_STARTING' as any,
-                    title: '🏓 Tournament is Starting!',
-                    message: `The tournament "${updatedTournament.name}" has started! Check your match schedule.`,
-                    createdAt: new Date(),
-                })),
-            });
-            console.log(`📧 Notified ${registeredPlayers.length} players that tournament has started`);
+          await Promise.all(
+            registeredPlayers.map((reg: any) =>
+              prisma.notification.create({
+                data: {
+                  userId: reg.playerId,
+                  type: 'TOURNAMENT_STARTING',
+                  title: '🏓 Tournament is Starting!',
+                  message: `The tournament "${updatedTournament.name}" has started! Check your match schedule.`,
+                  createdAt: new Date(),
+                },
+              })
+            )
+          );
+          console.log(`📧 Notified ${registeredPlayers.length} players that tournament has started`);
         }
     }
 
@@ -448,14 +452,18 @@ if (data.status === 'ONGOING') {
     });
 
     if (admins.length > 0) {
-      await prisma.notification.createMany({
-        data: admins.map((admin: { id: any; }) => ({
-          userId: admin.id,
-          type: 'REGISTRATION_PENDING',
-          title: 'New Tournament Registration',
-          message: `${player.user.firstName} ${player.user.lastName} has registered for ${tournament.name}`,
-        })),
-      });
+      await Promise.all(
+        admins.map((admin: { id: any }) =>
+          prisma.notification.create({
+            data: {
+              userId: admin.id,
+              type: 'REGISTRATION_PENDING',
+              title: 'New Tournament Registration',
+              message: `${player.user.firstName} ${player.user.lastName} has registered for ${tournament.name}`,
+            },
+          })
+        )
+      );
     }
 
     return registration;
@@ -681,14 +689,18 @@ if (data.status === 'ONGOING') {
   });
 
   if (admins.length > 0) {
-    await prisma.notification.createMany({
-      data: admins.map((admin: { id: any; }) => ({
-        userId: admin.id,
-        type: 'REGISTRATION_CANCELLED',
-        title: 'Registration Cancelled',
-        message: `${registration.player?.firstName || 'A player'} ${registration.player?.lastName || ''} has cancelled registration for ${registration.tournament.name}`,
-      })),
-    });
+    await Promise.all(
+      admins.map((admin: { id: any }) =>
+        prisma.notification.create({
+          data: {
+            userId: admin.id,
+            type: 'REGISTRATION_CANCELLED',
+            title: 'Registration Cancelled',
+            message: `${registration.player?.firstName || 'A player'} ${registration.player?.lastName || ''} has cancelled registration for ${registration.tournament.name}`,
+          },
+        })
+      )
+    );
   }
 
   return updated;

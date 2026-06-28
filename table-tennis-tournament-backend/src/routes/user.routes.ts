@@ -18,6 +18,7 @@ import { uploadProfileImage } from '../controllers/user.controller';
 import { recordProfileView } from '../controllers/user.controller';
 import { isSuperAdmin } from '../middleware/role.middleware';
 import { updatePlayerRanking } from '../controllers/user.controller';
+import { uploadPaymentReceipt } from '../controllers/user.controller';
 
 const router = Router();
 
@@ -32,6 +33,13 @@ router.post(
   authenticate,
   upload.single('profileImage'),
   uploadProfileImage
+);
+
+router.post(
+  '/upload-payment-receipt',
+  authenticate,
+  upload.single('paymentReceipt'),
+  uploadPaymentReceipt
 );
 
 // Profile routes (authenticated users)

@@ -1,0 +1,15 @@
+const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
+
+/**
+ * Prisma CLI config hook.
+ * Keep this file plain JS-compatible TS (no `import type`) to avoid parsing issues.
+ */
+export const prismaClientOptions = {
+  datasources: {
+    db: {
+      url: DATABASE_URL,
+    },
+  },
+};
+
+

@@ -3,8 +3,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
 import { config } from '../config/env';
-//import crypto from 'crypto';
-//import { sendPasswordResetEmail, sendVerificationEmail } from './email.service';
+import { sendWelcomeEmail } from './email.service';
 
 export class AuthService {
     // Register new user with Admin Approval Workflow
@@ -20,6 +19,7 @@ export class AuthService {
             dateOfBirth?: Date;
             skillLevel?: string;
             clubAffiliation?: string;
+            paymentReceiptUrl?: string;
         };
         refereeProfile?: {
             certification?: string;
@@ -42,7 +42,7 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(userData.password, config.BCRYPT_SALT_ROUNDS);
 
         // Create user with role-specific profile in a transaction
-        const user = await prisma.$transaction(async (tx) => {
+        const user = await prisma.$transaction(async (tx: any) => {
             // Set admin request status if registering as ADMIN
             let adminRequestStatus = 'NONE';
             let adminRequestedAt = null;
@@ -76,6 +76,7 @@ export class AuthService {
                         dateOfBirth: userData.playerProfile.dateOfBirth,
                         skillLevel: userData.playerProfile.skillLevel,
                         clubAffiliation: userData.playerProfile.clubAffiliation,
+                        paymentReceiptUrl: userData.playerProfile.paymentReceiptUrl,
                     },
                 });
             } else if (userData.role === 'REFEREE' && userData.refereeProfile) {
@@ -103,29 +104,28 @@ export class AuthService {
 
                 // Create notifications for all admins
                 if (existingAdmins.length > 0) {
-                    await prisma.notification.createMany({
-                        data: existingAdmins.map(admin => ({
-                            userId: admin.id,
-                            type: 'NEW_ADMIN_REQUEST' as any,
-                            title: '👑 New Admin Request',
-                            message: `${userData.firstName} ${userData.lastName} (${userData.email}) has requested to become an administrator. Go to Admin Requests to review.`,
-                            createdAt: new Date(),
-                        })),
-                    });
+                    await Promise.all(
+                        existingAdmins.map((admin: any) =>
+                            prisma.notification.create({
+                                data: {
+                                    userId: admin.id,
+                                    type: 'NEW_ADMIN_REQUEST',
+                                    title: '👑 New Admin Request',
+                                    message: `${userData.firstName} ${userData.lastName} (${userData.email}) has requested to become an administrator. Go to Admin Requests to review.`,
+                                    createdAt: new Date(),
+                                },
+                            })
+                        )
+                    );
                     console.log(`📧 Notified ${existingAdmins.length} admin(s) about new request`);
                 }
             } catch (error) {
                 console.error('Failed to notify admins:', error);
             }
         }
-        /*const verificationToken = crypto.randomBytes(32).toString('hex');
-
-        await prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerificationToken: verificationToken },
-        });
-
-        sendVerificationEmail(userData.email, verificationToken, userData.firstName).catch(console.error);*/
+        
+        // Send automated welcome email alert
+        sendWelcomeEmail(userData.email, userData.firstName).catch(console.error);
 
         // Generate JWT token
         const token = this.generateToken(user.id);

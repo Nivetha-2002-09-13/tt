@@ -10,6 +10,7 @@ import KnockoutBracket from "../components/KnockoutBracket";
 import GuestRegistrationModal from "../components/GuestRegistrationModal";
 import { Link } from "react-router-dom";
 import CreateKnockoutModal from "../components/CreateKnockoutModal";
+import WinnerCelebration from "../components/WinnerCelebration";
 
 interface Category {
   id: string;
@@ -118,10 +119,21 @@ const TournamentDetails: React.FC = () => {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [showKnockoutModal, setShowKnockoutModal] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     fetchTournamentDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (showWinners && winners?.first) {
+      const seenKey = `seen_celebration_${id}`;
+      if (!localStorage.getItem(seenKey)) {
+        setShowCelebration(true);
+        localStorage.setItem(seenKey, "true");
+      }
+    }
+  }, [showWinners, winners, id]);
 
   useEffect(() => {
     if (tournament?.status === "COMPLETED") {
@@ -1556,6 +1568,13 @@ const TournamentDetails: React.FC = () => {
         >
           Mark Complete
         </button>
+      )}
+      {/* Winner Celebration Modal */}
+      {showCelebration && winners && winners.first && (
+        <WinnerCelebration
+          winnerName={`${winners.first.firstName} ${winners.first.lastName}`}
+          onClose={() => setShowCelebration(false)}
+        />
       )}
     </div>
   );

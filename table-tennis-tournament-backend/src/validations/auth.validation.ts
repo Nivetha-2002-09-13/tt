@@ -21,7 +21,7 @@ export const registerSchema = z.object({
         // Role-specific profiles (optional based on role)
         playerProfile: z.object({
             dateOfBirth: z.string().datetime().optional(),
-            skillLevel: z.enum(['Beginner', 'Intermediate', 'Advanced']).optional(),
+            skillLevel: z.enum(['Beginner', 'Intermediate', 'Advanced', 'Professional']).optional(),
             clubAffiliation: z.string().optional(),
         }).optional(),
 

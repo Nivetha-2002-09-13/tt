@@ -1,5 +1,6 @@
 import app from './app';
 import { config } from './config/env';
+import { initSocket } from './utils/socket';
 
 const PORT = config.PORT || 3000;
 
@@ -7,6 +8,9 @@ const server = app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT} in ${config.NODE_ENV} mode`);
     console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });
+
+// Initialize WebSockets
+initSocket(server);
 
 // 🔥 Handle server errors (THIS WAS MISSING)
 server.on('error', (err: any) => {

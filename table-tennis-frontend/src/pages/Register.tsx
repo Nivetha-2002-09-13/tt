@@ -1,532 +1,244 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { handleApiError, showSuccess } from "../utils/errorHandler";
-import api from "../services/api";
 import toast from "react-hot-toast";
-
-interface FormErrors {
-  email?: string;
-  password?: string;
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  profileImage?: string;
-}
+import { motion } from "framer-motion";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    role: "PLAYER",
-    phone: "",
-    playerProfile: {
-      dateOfBirth: "",
-      skillLevel: "Intermediate",
-      clubAffiliation: "",
-    },
+    email: "", password: "", firstName: "", lastName: "",
+    role: "PLAYER", phone: "",
+    playerProfile: { gender: "", skillLevel: "Intermediate", clubAffiliation: "", dateOfBirth: "" },
   });
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [receiptName, setReceiptName] = useState<string | null>(null);
+  const [ageCategory, setAgeCategory] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // Password validation state
-  const [passwordValid, setPasswordValid] = useState({
-    length: false,
-    uppercase: false,
-    lowercase: false,
-    number: false,
-  });
-
-  const validatePassword = (password: string) => {
-    setPasswordValid({
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /[0-9]/.test(password),
-    });
-  };
-
-  // Add this function before the validateForm function
-  const validateSriLankanPhone = (phone: string): boolean => {
-    // Sri Lanka phone number patterns:
-    // Landline: 011-1234567, 081-1234567
-    // Mobile: 071-1234567, 072-1234567, 074-1234567, 075-1234567, 076-1234567, 077-1234567, 078-1234567
-    const phoneRegex = /^(0[1-9]{2})-?[0-9]{7}$|^(07[0-9])-?[0-9]{7}$/;
-    return phoneRegex.test(phone);
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    // First Name validation - at least 2 characters
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    } else if (formData.firstName.trim().length < 2) {
-      newErrors.firstName = "First name must be at least 2 characters";
-    }
-
-    // Last Name validation - at least 2 characters
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
-    } else if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = "Last name must be at least 2 characters";
-    }
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = "Email address is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email =
-        "Please enter a valid email address (e.g., name@example.com)";
-    }
-    // Phone validation
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!validateSriLankanPhone(formData.phone)) {
-      newErrors.phone =
-        "Please enter a valid Sri Lanka phone number (e.g., 071-1234567 or 011-1234567)";
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (
-      !passwordValid.length ||
-      !passwordValid.uppercase ||
-      !passwordValid.lowercase ||
-      !passwordValid.number
-    ) {
-      newErrors.password = "Please meet all password requirements below";
-    }
-
-    if (!profileImage) {
-      newErrors.profileImage = "Profile picture is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select an image file");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image must be less than 5MB");
-        return;
-      }
-
+      if (!file.type.startsWith("image/")) { toast.error("Please select an image"); return; }
+      if (file.size > 5 * 1024 * 1024) { toast.error("Image too large (<5MB)"); return; }
       setProfileImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
   };
 
+  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/") && file.type !== "application/pdf") { 
+        toast.error("Please select an image or PDF"); return; 
+      }
+      if (file.size > 5 * 1024 * 1024) { toast.error("File too large (<5MB)"); return; }
+      setPaymentReceipt(file);
+      setReceiptName(file.name);
+    }
+  };
+
+  const calculateAgeCategory = (dobString: string) => {
+    setFormData({ ...formData, playerProfile: { ...formData.playerProfile, dateOfBirth: dobString } });
+    if (!dobString) { setAgeCategory(""); return; }
+    
+    const dob = new Date(dobString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    setAgeCategory(age < 13 ? "Junior (Under 13)" : "Senior (13+)");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Please fix the errors above");
-      return;
+    if (!profileImage) { toast.error("Profile picture is required"); return; }
+    if (formData.role === "PLAYER") {
+      if (!formData.playerProfile.gender) { toast.error("Gender is required for players"); return; }
+      if (!formData.playerProfile.dateOfBirth) { toast.error("Date of Birth is required"); return; }
+      if (!paymentReceipt) { toast.error("Payment Receipt is required"); return; }
     }
 
     setIsLoading(true);
-
     try {
-      const registerData: any = {
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        role: formData.role,
-        phone: formData.phone,
-      };
+      // 1. Register User (JSON)
+      const payload = { ...formData };
+      if (payload.role !== "PLAYER") delete (payload as any).playerProfile;
+      else payload.playerProfile.dateOfBirth = new Date(payload.playerProfile.dateOfBirth).toISOString();
 
-      if (formData.role === "PLAYER") {
-        registerData.playerProfile = {
-          dateOfBirth: formData.playerProfile.dateOfBirth
-            ? new Date(formData.playerProfile.dateOfBirth)
-            : undefined,
-          skillLevel: formData.playerProfile.skillLevel,
-          clubAffiliation: formData.playerProfile.clubAffiliation,
-        };
-      } else if (formData.role === "REFEREE") {
-        registerData.refereeProfile = {
-          certification: "National Level",
-          experienceYears: 2,
-        };
-      } else if (formData.role === "ADMIN") {
-        registerData.adminProfile = {
-          department: "Tournament Management",
-        };
-      }
+      await register(payload);
 
-      await register(registerData);
-
+      // 2. Upload Profile Image
       if (profileImage) {
-        const formDataUpload = new FormData();
-        formDataUpload.append("profileImage", profileImage);
-
-        await api.post("/users/upload-profile-image", formDataUpload, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const fdImg = new FormData(); fdImg.append("profileImage", profileImage);
+        await api.post("/users/upload-profile-image", fdImg, { headers: { "Content-Type": "multipart/form-data" } });
       }
 
-      showSuccess("Welcome! Your account has been created successfully.");
-      navigate("/app/dashboard");
-    } catch (error) {
-      handleApiError(error as any);
+      // 3. Upload Payment Receipt
+      if (paymentReceipt && formData.role === "PLAYER") {
+        const fdReceipt = new FormData(); fdReceipt.append("paymentReceipt", paymentReceipt);
+        await api.post("/users/upload-payment-receipt", fdReceipt, { headers: { "Content-Type": "multipart/form-data" } });
+      }
+
+      toast.success("Account created! Please verify your email.");
+      navigate("/login");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-
-    if (name === "password") {
-      validatePassword(value);
-    }
-
-    if (
-      name === "skillLevel" ||
-      name === "clubAffiliation" ||
-      name === "dateOfBirth"
-    ) {
-      setFormData((prev) => ({
-        ...prev,
-        playerProfile: {
-          ...prev.playerProfile,
-          [name]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-
-    // Clear error for this field
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const isPasswordValid =
-    passwordValid.length &&
-    passwordValid.uppercase &&
-    passwordValid.lowercase &&
-    passwordValid.number;
-
   return (
-    <div className="flex min-h-screen w-screen items-center justify-center overflow-hidden bg-[#061D23] p-0">
-      <div className="flex min-h-screen w-full overflow-hidden border border-[#12679E]/40 bg-[#061D23] shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
-        <div className="relative flex min-h-[220px] items-start justify-center overflow-hidden bg-[linear-gradient(135deg,#2A5F72_0%,#123B4A_45%,#061D23_100%)] p-8 pt-10 text-white sm:p-10 sm:pt-12 lg:min-h-full lg:w-[42%] lg:justify-start lg:p-12 lg:pt-14">
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(125, 179, 241, 0.53)_0%,rgba(6,29,35,0.1)_70%)]" />
-            <div className="absolute inset-0 bg-[rgba(225, 224, 255, 0.42)] [clip-path:polygon(68%_0,80%_0,53%_100%,41%_100%)]" />
-            <div className="absolute inset-0 bg-[rgba(58, 121, 240, 0.16)] [clip-path:polygon(78%_0,90%_0,63%_100%,51%_100%)]" />
+    <div className="min-h-screen flex text-white" style={{ background: "#061D23" }}>
+      {/* ── Left Half: Form ── */}
+      <div className="w-full lg:w-7/12 flex flex-col justify-center px-6 sm:px-12 py-12 relative z-10 bg-[#061D23] overflow-y-auto max-h-screen custom-scrollbar">
+        <Link to="/" className="absolute top-8 left-6 sm:left-12 flex items-center gap-2 group">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#12679E] to-[#4AEEFF]/60 rounded-lg
+                          flex items-center justify-center transform transition-all group-hover:scale-110">
+            <span className="text-white text-sm">🏓</span>
           </div>
+          <span className="font-black text-lg tracking-tight">TT<span className="text-[#4AEEFF]">MS</span></span>
+        </Link>
 
-          <div className="relative z-10 max-w-sm">
-            <div className="mb-4 inline-flex rounded-full border border-[#061D23] bg-[#061D23] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.35em] text-[#D8FBFF]">
-              Sam's College
-            </div>
-            <h1 className="text-3xl font-black uppercase tracking-[0.25em] text-white">
-              Create Account
-            </h1>
-            <p className="mt-3 text-sm uppercase tracking-[0.25em] text-[#D8FBFF]">
-              Join the tournament platform
-            </p>
-            <div className="mt-6 h-1 w-24 rounded-full bg-[linear-gradient(90deg,#CFF9FF,#12679E)]" />
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-2xl w-full mx-auto mt-16 lg:mt-8"
+        >
+          <p className="text-[#4AEEFF] font-bold text-sm tracking-widest uppercase mb-2">Join the Platform</p>
+          <h2 className="text-4xl font-black text-white mb-8">Create Account</h2>
 
-        <div className="w-full bg-[linear-gradient(160deg,#123B4A_0%,#061D23_100%)] p-6 sm:p-8 lg:w-[58%]">
-          <div className="mb-6 h-1 w-full rounded-full bg-[#CFF9FF]" />
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                  First Name *
-                </label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  className={`w-full rounded-md border bg-[#061D23] px-4 py-3 text-[15px] text-white placeholder:text-[#D8FBFF] focus:outline-none ${errors.firstName ? "border-[#4AEEFF]" : "border-[#12679E] focus:border-[#4AEEFF]"}`}
-                  placeholder="John"
-                />
-                {errors.firstName && (
-                  <p className="mt-1 text-xs text-[#4AEEFF]">{errors.firstName}</p>
-                )}
-                <p className="mt-1 text-xs text-[#D8FBFF]">
-                  {formData.firstName
-                    ? `${formData.firstName.length}/2+ characters`
-                    : "Minimum 2 characters required"}
-                </p>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                  Last Name *
-                </label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  className={`w-full rounded-md border bg-[#061D23] px-4 py-3 text-[15px] text-white placeholder:text-[#D8FBFF] focus:outline-none ${errors.lastName ? "border-[#4AEEFF]" : "border-[#12679E] focus:border-[#4AEEFF]"}`}
-                  placeholder="Doe"
-                />
-                {errors.lastName && (
-                  <p className="mt-1 text-xs text-[#4AEEFF]">{errors.lastName}</p>
-                )}
-                <p className="mt-1 text-xs text-[#D8FBFF]">
-                  {formData.lastName
-                    ? `${formData.lastName.length}/2+ characters`
-                    : "Minimum 2 characters required"}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                Email Address *
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Image Upload */}
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-[#12679E]/40 rounded-2xl bg-[#12679E]/5 hover:bg-[#12679E]/10 transition-colors">
+              <input type="file" id="profileImage" accept="image/*" onChange={handleImageChange} className="hidden" />
+              <label htmlFor="profileImage" className="cursor-pointer flex flex-col items-center">
+                <div className="w-20 h-20 rounded-full border-2 border-[#4AEEFF]/40 mb-3 overflow-hidden bg-[#061D23] flex items-center justify-center">
+                  {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" /> : <span className="text-2xl">📸</span>}
+                </div>
+                <span className="text-sm font-semibold text-[#4AEEFF]">{imagePreview ? "Change Photo" : "Upload Profile Photo *"}</span>
               </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full rounded-md border bg-[#061D23] px-4 py-3 text-[15px] text-white placeholder:text-[#D8FBFF] focus:outline-none ${errors.email ? "border-[#4AEEFF]" : "border-[#12679E] focus:border-[#4AEEFF]"}`}
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-[#4AEEFF]">{errors.email}</p>
-              )}
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                Password *
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full rounded-md border bg-[#061D23] px-4 py-3 pr-12 text-[15px] text-white placeholder:text-[#D8FBFF] focus:outline-none ${errors.password ? "border-[#4AEEFF]" : "border-[#12679E] focus:border-[#4AEEFF]"}`}
-                  placeholder="Create a strong password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#CFF9FF]"
-                >
-                  {showPassword ? "👁️" : "👁️‍🗨️"}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">First Name</label>
+                <input type="text" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                       className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Last Name</label>
+                <input type="text" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                       className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Email</label>
+                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                       className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Phone</label>
+                <input type="tel" required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                       className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+              </div>
+              <div className="md:col-span-2 relative">
+                <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Password</label>
+                <input type={showPassword ? "text" : "password"} required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                       className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl pl-4 pr-12 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-10 text-[#4AEEFF]/60 hover:text-[#4AEEFF]">
+                  {showPassword ? "👁" : "👁‍🗨"}
                 </button>
               </div>
+            </div>
 
-              <div className="mt-2 space-y-1 text-xs text-[#4AEEFF]">
-                <p className="text-[#FFFFFF]">
-                  {passwordValid.length ? "✓" : "○"} At least 8 characters
-                </p>
-                <p className="text-[#FFFFFF]">
-                  {passwordValid.uppercase ? "✓" : "○"} At least one uppercase letter (A-Z)
-                </p>
-                <p className="text-[#FFFFFF]">
-                  {passwordValid.lowercase ? "✓" : "○"} At least one lowercase letter (a-z)
-                </p>
-                <p className="text-[#FFFFFF]">
-                  {passwordValid.number ? "✓" : "○"} At least one number (0-9)
-                </p>
+            <div className="pt-4 border-t border-[#12679E]/30">
+              <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-3">Role</label>
+              <div className="flex gap-4">
+                {["PLAYER", "REFEREE", "ADMIN"].map((role) => (
+                  <label key={role} className={`flex-1 p-3 rounded-xl border text-center cursor-pointer transition-colors ${formData.role === role ? "bg-[#4AEEFF]/10 border-[#4AEEFF] text-[#4AEEFF]" : "bg-[#12679E]/10 border-[#12679E]/40 text-[#D8FBFF]/50 hover:bg-[#12679E]/20"}`}>
+                    <input type="radio" name="role" value={role} checked={formData.role === role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="hidden" />
+                    <span className="text-xs font-bold uppercase tracking-wider">{role}</span>
+                  </label>
+                ))}
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-[#4AEEFF]">{errors.password}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`w-full rounded-md border bg-[#061D23] px-4 py-3 text-[15px] text-white placeholder:text-[#FFFFFF] focus:outline-none ${errors.phone ? "border-[#4AEEFF]" : "border-[#12679E] focus:border-[#4AEEFF]"}`}
-                placeholder="071-1234567 or 011-1234567"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-[#4AEEFF]">{errors.phone}</p>
-              )}
-              <p className="mt-1 text-xs text-[#D8FBFF]">
-                Format: Mobile: 071-1234567 | Landline: 011-1234567
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                I want to join as *
-              </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full rounded-md border border-[#12679E] bg-[#061D23] px-4 py-3 text-[15px] text-white focus:border-[#4AEEFF] focus:outline-none"
-              >
-                <option value="PLAYER">🏓 Player - Compete in tournaments</option>
-                <option value="REFEREE">👨‍⚖️ Referee - Officiate matches</option>
-                <option value="ADMIN">👑 Admin - Manage tournaments</option>
-              </select>
-              <p className="mt-1 text-xs text-[#D8FBFF]">
-                {formData.role === "PLAYER" &&
-                  "Join tournaments, track your progress, and compete with others!"}
-                {formData.role === "REFEREE" &&
-                  "Officiate matches, record scores, and manage games."}
-                {formData.role === "ADMIN" &&
-                  "Create tournaments, manage players, and oversee everything."}
-              </p>
             </div>
 
             {formData.role === "PLAYER" && (
-              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                    Date of Birth *
-                  </label>
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.playerProfile.dateOfBirth || ""}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-md border border-[#12679E] bg-[#061D23] px-4 py-3 text-[15px] text-white focus:border-[#4AEEFF] focus:outline-none"
-                    max={new Date().toISOString().split("T")[0]}
-                  />
-                  <p className="mt-1 text-xs text-[#D8FBFF]">
-                    This helps us determine your age category for tournaments
-                  </p>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                    Your Skill Level
-                  </label>
-                  <select
-                    name="skillLevel"
-                    value={formData.playerProfile.skillLevel}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-[#12679E] bg-[#061D23] px-4 py-3 text-[15px] text-white focus:border-[#4AEEFF] focus:outline-none"
-                  >
-                    <option value="Beginner">🏅 Beginner - Just starting out</option>
-                    <option value="Intermediate">🎯 Intermediate - Have some experience</option>
-                    <option value="Advanced">🏆 Advanced - Competing at high level</option>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Gender</label>
+                  <select required value={formData.playerProfile.gender} onChange={(e) => setFormData({ ...formData, playerProfile: { ...formData.playerProfile, gender: e.target.value } })}
+                          className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none">
+                    <option value="" className="bg-[#0d2d38]">Select</option>
+                    <option value="MALE" className="bg-[#0d2d38]">Male</option>
+                    <option value="FEMALE" className="bg-[#0d2d38]">Female</option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                    Club or Academy (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="clubAffiliation"
-                    value={formData.playerProfile.clubAffiliation}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-[#12679E] bg-[#061D23] px-4 py-3 text-[15px] text-white placeholder:text-[#D8FBFF] focus:border-[#4AEEFF] focus:outline-none"
-                    placeholder="e.g., City Table Tennis Club"
-                  />
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Date of Birth</label>
+                  <input type="date" required value={formData.playerProfile.dateOfBirth} onChange={(e) => calculateAgeCategory(e.target.value)}
+                         className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+                  {ageCategory && <p className="text-xs text-[#4AEEFF] mt-1 font-semibold">{ageCategory} Category</p>}
                 </div>
-              </>
+                <div>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Skill Level</label>
+                  <select required value={formData.playerProfile.skillLevel} onChange={(e) => setFormData({ ...formData, playerProfile: { ...formData.playerProfile, skillLevel: e.target.value } })}
+                          className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none">
+                    <option value="Beginner" className="bg-[#0d2d38]">Beginner</option>
+                    <option value="Intermediate" className="bg-[#0d2d38]">Intermediate</option>
+                    <option value="Advanced" className="bg-[#0d2d38]">Advanced</option>
+                    <option value="Professional" className="bg-[#0d2d38]">Professional</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Club (Optional)</label>
+                  <input type="text" value={formData.playerProfile.clubAffiliation} onChange={(e) => setFormData({ ...formData, playerProfile: { ...formData.playerProfile, clubAffiliation: e.target.value } })}
+                         className="w-full bg-[#12679E]/10 border border-[#12679E]/40 rounded-xl px-4 py-3 text-white focus:border-[#4AEEFF] outline-none" />
+                </div>
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-[#D8FBFF]/70 uppercase tracking-widest mb-2">Registration Fee Receipt *</label>
+                  <div className="flex items-center gap-4">
+                    <label className="cursor-pointer bg-[#12679E]/20 hover:bg-[#12679E]/40 border border-[#12679E]/40 text-[#4AEEFF] px-4 py-3 rounded-xl transition-colors font-bold text-sm">
+                      Upload Receipt
+                      <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReceiptChange} />
+                    </label>
+                    {receiptName && <span className="text-sm text-[#D8FBFF]/60 truncate max-w-xs">📎 {receiptName}</span>}
+                  </div>
+                </div>
+              </div>
             )}
 
-            <div>
-              <label className="mb-2 block text-sm font-semibold uppercase tracking-[0.2em] text-[#CFF9FF]">
-                Profile Photo *
-              </label>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                {imagePreview && (
-                  <div className="relative">
-                    <img
-                      src={imagePreview}
-                      alt="Profile preview"
-                      className="h-20 w-20 rounded-full border-2 border-[#4AEEFF] object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileImage(null);
-                        setImagePreview(null);
-                      }}
-                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#4AEEFF] text-xs font-bold text-[#061D23] hover:bg-[#FFFFFF]"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
-
-                <label className="cursor-pointer rounded-lg border border-[#12679E] bg-[#12679E] px-4 py-2 text-sm font-semibold text-[#FFFFFF] transition hover:bg-[#4AEEFF] hover:text-[#061D23]">
-                  {imagePreview ? "Change Photo" : "Choose Photo"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    required={!imagePreview}
-                  />
-                </label>
-              </div>
-              {errors.profileImage && (
-                <p className="mt-1 text-xs text-[#4AEEFF]">{errors.profileImage}</p>
-              )}
-
-              <p className="mt-1 text-xs text-[#D8FBFF]">
-                JPG, PNG or GIF. Max 5MB.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || (!!formData.password && !isPasswordValid)}
-              className="w-full rounded-md bg-[#FFFFFF] px-4 py-3 text-sm font-black uppercase tracking-[0.25em] text-[#061D23] transition hover:bg-[#4AEEFF] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isLoading ? "Creating your account..." : "Create Free Account"}
+            <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-[#4AEEFF] to-[#12679E] text-[#061D23] font-black py-4 rounded-xl text-sm uppercase tracking-widest hover:from-[#CFF9FF] hover:to-[#4AEEFF] transition-all mt-4">
+              {isLoading ? "Creating Account…" : "Create Account"}
             </button>
+
+            <div className="text-center pt-4">
+              <p className="text-sm text-[#D8FBFF]/40">Already have an account? <Link to="/login" className="text-[#4AEEFF] font-bold hover:underline">Sign In</Link></p>
+            </div>
           </form>
+        </motion.div>
+      </div>
 
-          <p className="mt-6 text-center text-sm text-[#D8FBFF]">
-            Already have an account?{" "}
-            <Link to="/login" className="font-semibold text-[#4AEEFF] hover:text-[#CFF9FF]">
-              Sign in here
-            </Link>
-          </p>
-
-          <div className="mt-6 border-t border-[#12679E]/40 pt-6">
-            <p className="text-center text-xs text-[#D8FBFF]">
-              By signing up, you agree to our Terms of Service and Privacy Policy.
-            </p>
+      {/* ── Right Half: Abstract Visual ── */}
+      <div className="hidden lg:flex w-5/12 relative overflow-hidden bg-[#0a2535] border-l border-[#12679E]/30 items-center justify-center"
+           style={{ background: "linear-gradient(135deg, #0a2535 0%, #061D23 100%)" }}>
+        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full opacity-[0.08] blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #4AEEFF, transparent)" }} />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full opacity-[0.05] blur-3xl pointer-events-none" style={{ background: "radial-gradient(circle, #12679E, transparent)" }} />
+        <div className="absolute inset-0 pointer-events-none opacity-10" style={{ backgroundImage: `linear-gradient(#4AEEFF 1px, transparent 1px), linear-gradient(90deg, #4AEEFF 1px, transparent 1px)`, backgroundSize: "60px 60px" }} />
+        <div className="relative z-10 m-auto max-w-md text-center px-8">
+          <div className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-[#12679E] to-[#4AEEFF]/40 rounded-3xl flex items-center justify-center border border-[#4AEEFF]/30 shadow-[0_0_50px_rgba(74,238,255,0.2)]">
+            <span className="text-6xl text-white">🏆</span>
           </div>
+          <h3 className="text-3xl font-black text-white mb-4">Join the Elite</h3>
+          <p className="text-[#D8FBFF]/60 text-lg">Create your profile to start competing in tournaments, tracking your matches, and climbing the global ranks.</p>
         </div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import prisma from '../config/database';
 import { AppError } from '../utils/AppError';
-import { MatchType, MatchStatus } from '@prisma/client';
 
 export class GroupService {
   // Create groups and assign players
@@ -642,9 +641,9 @@ async updateGroupMembers(
   // Rebuild GroupPlayer records for each group
   for (const { groupId, playerIds } of groupAssignments) {
     await prisma.groupPlayer.deleteMany({ where: { groupId } });
-    await prisma.groupPlayer.createMany({
-      data: playerIds.map(playerId => ({ groupId, playerId })),
-    });
+    await Promise.all(
+      playerIds.map((playerId) => prisma.groupPlayer.create({ data: { groupId, playerId } }))
+    );
   }
 
   // Regenerate group matches (wipes old unplayed ones)
